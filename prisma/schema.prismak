@@ -1,0 +1,149 @@
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id                String    @id @default(cuid())
+  name              String
+  email             String             @unique
+  sex               SexStatus?
+  phoneNumber       String
+  age               Int
+  password          String
+  role              Role
+  createdAt         DateTime           @default(now())
+  updatedAt         DateTime           @updatedAt
+  courses           Course[]           @relation("LecturerCourses")
+  extensionRequests ExtensionRequest[]
+  submissions       Submission[]
+  emailVerified     Boolean            @default(false)
+  image             String?
+  sessions          Session[]
+  accounts          Account[]
+
+  @@map("user")
+}
+
+model Course {
+  id          String    @id @default(cuid())
+  courseName  String
+  courseCode  String?
+  description String
+  lecturerId  Int
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+  assignments Assignment[]
+  lecturer    User         @relation("LecturerCourses", fields: [lecturerId], references: [id])
+}
+
+model Assignment {
+  id                String    @id @default(cuid())
+  courseId          Int
+  title             String
+  description       String
+  dueDate           DateTime
+  createdAt         DateTime           @default(now())
+  updatedAt         DateTime           @updatedAt
+  course            Course             @relation(fields: [courseId], references: [id])
+  extensionRequests ExtensionRequest[]
+  submissions       Submission[]
+}
+
+model Submission {
+  id             Int              @id @default(autoincrement())
+  assignmentId   Int
+  studentId      Int
+  filePath       String
+  submissionDate DateTime         @default(now())
+  grade          Float?
+  feedback       String?
+  status         SubmissionStatus @default(PENDING)
+  assignment     Assignment       @relation(fields: [assignmentId], references: [id])
+  student        User             @relation(fields: [studentId], references: [id])
+}
+
+model ExtensionRequest {
+  id            Int           @id @default(autoincrement())
+  studentId     Int
+  assignmentId  Int
+  reason        String
+  requestedDate DateTime?
+  status        RequestStatus @default(PENDING)
+  createdAt     DateTime      @default(now())
+  assignment    Assignment    @relation(fields: [assignmentId], references: [id])
+  student       User          @relation(fields: [studentId], references: [id])
+}
+
+enum Role {
+  STUDENT
+  LECTURER
+  ADMIN
+}
+
+enum RequestStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
+enum SexStatus {
+  MALE
+  FEMALE
+}
+
+enum SubmissionStatus {
+  SUBMITTED
+  PENDING
+  LATE
+}
+
+model Session {
+  id        String   @id
+  expiresAt DateTime
+  token     String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  ipAddress String?
+  userAgent String?
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([token])
+  @@map("session")
+}
+
+model Account {
+  id                    String    @id
+  accountId             String
+  providerId            String
+  userId                String
+  user                  User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  accessToken           String?
+  refreshToken          String?
+  idToken               String?
+  accessTokenExpiresAt  DateTime?
+  refreshTokenExpiresAt DateTime?
+  scope                 String?
+  password              String?
+  createdAt             DateTime  @default(now())
+  updatedAt             DateTime  @updatedAt
+
+  @@map("account")
+}
+
+model Verification {
+  id         String   @id
+  identifier String
+  value      String
+  expiresAt  DateTime
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @default(now()) @updatedAt
+
+  @@map("verification")
+}

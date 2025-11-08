@@ -1,0 +1,186 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id            String   @id
+  name          String
+  email         String
+  emailVerified Boolean  @default(false)
+  phoneNumber   String?
+  image         String?
+  level         String
+  gender        Gender   
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @default(now()) @updatedAt
+
+  role Role @default(STUDENT)
+
+  coursesCreated     Course[]
+  enrollments        Enrollment[]
+  assignmentsCreated Assignment[] @relation("LecturerAssignments")
+  submissions        Submission[]
+
+  sessions Session[]
+  accounts Account[]
+
+  notifications Notification[]
+
+  @@unique([email])
+  @@map("user")
+}
+
+model Session {
+  id        String   @id
+  expiresAt DateTime
+  token     String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  ipAddress String?
+  userAgent String?
+
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([token])
+  @@map("session")
+}
+
+model Account {
+  id                    String    @id
+  accountId             String
+  providerId            String
+  userId                String
+  user                  User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  accessToken           String?
+  refreshToken          String?
+  idToken               String?
+  accessTokenExpiresAt  DateTime?
+  refreshTokenExpiresAt DateTime?
+  scope                 String?
+  password              String?
+  createdAt             DateTime  @default(now())
+  updatedAt             DateTime  @updatedAt
+
+  @@map("account")
+}
+
+model Verification {
+  id         String   @id
+  identifier String
+  value      String
+  expiresAt  DateTime
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @default(now()) @updatedAt
+
+  @@map("verification")
+}
+
+model Course {
+  id          String   @id @default(cuid())
+  name        String
+  code        String?
+  level       String
+  description String
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  enrollments Enrollment[]
+  assignments Assignment[]
+
+  lecturerId String
+  lecturer   User   @relation(fields: [lecturerId], references: [id])
+
+  @@index([lecturerId])
+}
+
+model Enrollment {
+  id String @id @default(cuid())
+
+  // Student who enrolled
+  studentId String
+  student   User   @relation(fields: [studentId], references: [id], onDelete: Cascade)
+
+  // Course they enrolled in
+  courseId String
+  course   Course @relation(fields: [courseId], references: [id], onDelete: Cascade)
+
+  // Enrollment details
+  status EnrollmentStatus @default(ACTIVE)
+
+  // Timestamps
+  enrolledAt  DateTime  @default(now())
+  completedAt DateTime?
+  cancelledAt DateTime?
+
+  @@unique([studentId, courseId])
+  @@index([studentId])
+  @@index([courseId])
+  @@index([status])
+}
+
+enum EnrollmentStatus {
+  ACTIVE
+  COMPLETED
+  CANCELLED
+  SUSPENDED
+}
+
+model Assignment {
+  id          String   @id @default(cuid())
+  title       String
+  description String?
+  dueDate     DateTime
+  createdAt   DateTime @default(now())
+
+  extensible Boolean
+
+  // Relation to the lecturer who created it
+  lecturerId String
+  lecturer   User   @relation("LecturerAssignments", fields: [lecturerId], references: [id])
+
+  // Relation to student submissions
+  submissions Submission[]
+
+  courseId String // ✅ foreign key
+  course   Course @relation(fields: [courseId], references: [id])
+}
+
+model Submission {
+  id          String   @id @default(cuid())
+  fileUrl     String
+  submittedAt DateTime @default(now())
+
+  // Relations
+  studentId    String
+  assignmentId String
+
+  student    User       @relation(fields: [studentId], references: [id])
+  assignment Assignment @relation(fields: [assignmentId], references: [id])
+}
+
+enum Role {
+  STUDENT
+  LECTURER
+  ADMIN
+}
+
+model Notification {
+  id        String   @id @default(cuid())
+  message   String
+  isRead    Boolean  @default(false)
+  createdAt DateTime @default(now())
+
+  intendedUserId String 
+  user      User    @relation(fields: [intendedUserId], references: [id])
+}
+
+enum Gender {
+  MALE
+  FEMALE
+}

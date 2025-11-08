@@ -1,0 +1,100 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id                Int                @id @default(autoincrement())
+  name              String
+  email             String             @unique
+  sex               SexStatus?
+  phoneNumber       String
+  age               Int
+  password          String
+  role              Role
+  createdAt         DateTime           @default(now())
+  updatedAt         DateTime           @updatedAt
+  courses           Course[]           @relation("LecturerCourses")
+  extensionRequests ExtensionRequest[]
+  submissions       Submission[]
+}
+
+model Course {
+  id          Int          @id @default(autoincrement())
+  courseName  String
+  courseCode  String?
+  description String
+  lecturerId  Int
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+  assignments Assignment[]
+  lecturer    User         @relation("LecturerCourses", fields: [lecturerId], references: [id])
+}
+
+model Assignment {
+  id                Int                @id @default(autoincrement())
+  courseId          Int
+  title             String
+  description       String
+  dueDate           DateTime
+  createdAt         DateTime           @default(now())
+  updatedAt         DateTime           @updatedAt
+  course            Course             @relation(fields: [courseId], references: [id])
+  extensionRequests ExtensionRequest[]
+  submissions       Submission[]
+}
+
+
+model Submission {
+  id             Int                @id @default(autoincrement())
+  assignmentId   Int
+  studentId      Int
+  filePath       String
+  submissionDate DateTime           @default(now())
+  grade          Float?
+  feedback       String?
+  status         SubmissionStatus   @default(PENDING)
+  assignment     Assignment         @relation(fields: [assignmentId], references: [id])
+  student        User               @relation(fields: [studentId], references: [id])
+}
+
+
+model ExtensionRequest {
+  id           Int           @id @default(autoincrement())
+  studentId    Int
+  assignmentId Int
+  reason       String
+  requestedDate  DateTime?
+  status       RequestStatus @default(PENDING)
+  createdAt    DateTime      @default(now())
+  assignment   Assignment    @relation(fields: [assignmentId], references: [id])
+  student      User          @relation(fields: [studentId], references: [id])
+}
+
+enum Role {
+  STUDENT
+  LECTURER
+  ADMIN
+}
+
+enum RequestStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
+enum SexStatus {
+  MALE
+  FEMALE
+  
+}
+
+enum SubmissionStatus {
+  SUBMITTED
+  PENDING
+  LATE
+}
