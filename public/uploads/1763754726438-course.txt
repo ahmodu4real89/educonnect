@@ -1,0 +1,20 @@
+ADMIN
+COURSE- fetch, create, edit and delete ---done
+ASSIGNMENT-- fetch, create -- done, 
+ but when i clicked a course i only want to see assignment under the course, we are having issue on the API based on the table design
+--for admin when a particular assignment is clicked, it should fetch all the candidate who submit the assignment plus the linked to download the assignment with a text box where the lecturer can score the candidate, GRADINGTABLE can handle that, it there inside the component folder, 
+
+Admin landing page should fetch the extension request and action to be taking
+
+STUDENT
+COURSE- fetch, enroll, display the enrolled course---- done
+
+Course- when i clicked one single course i should be able to see the assignment under the course, 
+	- if as a student i have submit the assignment the status on the table should change to submitted the link should be disabled,
+	- if the student is yet to submit the assignment, it should take the student to the page where i can upload and submit the assignment
+
+
+
+these will happen on the landing page of Student, i have table that take care of the 2 already
+Assignment- candidate should be able to fetch assignment that is yet to be submitted with their dates, 
+Assignment- candidate should be able to fetch the submitted assignment with their various score

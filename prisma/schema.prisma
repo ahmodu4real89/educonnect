@@ -1,0 +1,147 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+enum RoleType {
+  STUDENT
+  LECTURER
+  ADMIN
+}
+
+model User {
+  id       String   @id @default(cuid())
+  fullname String
+  email    String   @unique
+  password String
+  level    String
+  gender   Gender
+  role     RoleType
+  image    String   @default("https://picsum.photos/300/200?random=4")
+
+  emailVerified Boolean @default(false)
+
+  // Student relationships
+  enrollments Enrollment[]
+  submissions Submission[]
+
+  notifications Notification[]
+
+  // extension requests (student)
+  extensionRequests Request[]
+
+  // Lecturer relationships
+  teachingCourses   CourseLecturer[]
+  gradedSubmissions Submission[]     @relation("GradedBy")
+  // courses created by this user (admin)
+  createdCourses    Course[]
+}
+
+model Course {
+  id          String           @id @default(cuid())
+  name       String
+  code        String
+  level       String
+  description String?
+  image       String           @default("https://picsum.photos/300/200?random=4")
+  // optional creator (admin who created the course)
+  createdBy   String?
+  creator     User?            @relation(fields: [createdBy], references: [id])
+  lecturers   CourseLecturer[]
+  enrollments Enrollment[]
+  assignments Assignment[]
+}
+
+model CourseLecturer {
+  courseId   String
+  lecturerId String
+  assignedAt DateTime @default(now())
+
+  course   Course @relation(fields: [courseId], references: [id])
+  lecturer User   @relation(fields: [lecturerId], references: [id])
+
+  @@id([courseId, lecturerId])
+}
+
+model Enrollment {
+  studentId  String
+  courseId   String
+  enrolledAt DateTime @default(now())
+
+  student User   @relation(fields: [studentId], references: [id])
+  course  Course @relation(fields: [courseId], references: [id])
+
+  @@id([studentId, courseId])
+}
+
+model Assignment {
+  id          String       @id @default(cuid())
+  title       String
+  description String?
+  extensible  Boolean      @default(false)
+  dueDate     DateTime
+  courseId    String
+  course      Course       @relation(fields: [courseId], references: [id])
+  submissions Submission[]
+  // extension requests related to this assignment
+  extensionRequests Request[]
+}
+
+model Submission {
+  id           String    @id @default(cuid())
+  content      String
+  feedback     String?
+  submittedAt  DateTime  @default(now())
+  grade        Float?
+  gradedAt     DateTime?
+  assignmentId String
+  studentId    String
+  graderId     String?
+
+  assignment Assignment @relation(fields: [assignmentId], references: [id])
+  student    User       @relation(fields: [studentId], references: [id])
+  grader     User?      @relation("GradedBy", fields: [graderId], references: [id])
+
+  /// Ensure a student can only have one submission per assignment at the DB level.
+  @@unique([assignmentId, studentId])
+}
+
+model Notification {
+  id        String   @id @default(cuid())
+  message   String
+  isRead    Boolean  @default(false)
+  createdAt DateTime @default(now())
+
+  assignmentId String?
+
+  intendedUserId String
+  user           User   @relation(fields: [intendedUserId], references: [id])
+}
+model Request {
+  id        String   @id @default(cuid())
+  message   String
+  isRead    Boolean  @default(false)
+  createdAt DateTime @default(now())
+  assignmentId String
+  studentId    String
+  requestedDate DateTime?
+  status        RequestStatus @default(PENDING)
+
+  student    User       @relation(fields: [studentId], references: [id])
+  assignment Assignment @relation(fields: [assignmentId], references: [id])
+}
+
+enum RequestStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
+enum Gender {
+  MALE
+  FEMALE
+}
