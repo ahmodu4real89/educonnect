@@ -40,18 +40,17 @@ export const updateCourse = async (course: TCreateCourse) => {
   return safe(prisma.course.create({ data: course }))
 }
 export const getACourse = async (courseId: string) => {
-  return await safe(prisma.course.findFirst({
-    where: {
-      id: courseId
-    },
+  if (!courseId) return { data: null, error: 'Missing course id' }
+  return await safe(prisma.course.findUnique({
+    where: { id: courseId },
     include: {
-      lecturers: { 
-        include: { 
-          lecturer: true 
-        } 
+      lecturers: {
+        include: {
+          lecturer: true,
+        },
       },
-      assignments: true
-    }
+      assignments: true,
+    },
   }))
 }
 

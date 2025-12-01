@@ -13,7 +13,15 @@ export const createRequest = async(request: {message: string, assignmentId: stri
     studentId: user?.userId,
   }
 
-  if (request.requestedDate) payload.requestedDate = new Date(request.requestedDate)
+  if (request.requestedDate) {
+    const d = request.requestedDate
+    if (typeof d === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(d)) {
+      // normalize to noon UTC to avoid timezone shifts
+      payload.requestedDate = new Date(`${d}T12:00:00.000Z`)
+    } else {
+      payload.requestedDate = new Date(d)
+    }
+  }
 
   const {data, error} = await safe(prisma.request.create({data: payload}))
   if(error) return {error: "something went wrong", data: null}

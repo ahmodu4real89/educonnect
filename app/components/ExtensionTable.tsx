@@ -18,7 +18,9 @@ const ExtensionTable = () => {
         }
 
         const data = await res.json();
-        setExtensions(data);
+        // Unwrap { data: [...] } shaped responses or accept raw arrays
+        const items = Array.isArray(data) ? data : Array.isArray(data?.data) ? data.data : [];
+        setExtensions(items as any[]);
       } catch (err) {
         console.error("Error fetching extensions:", err);
       } finally {
@@ -29,25 +31,36 @@ const ExtensionTable = () => {
     fetchExtensions();
   }, []);
 
-  const handleAction = async (id: string, action: "APPROVED" | "REJECTED") => {
+  const handleAction = async (id: string | undefined, action: "APPROVED" | "REJECTED") => {
     setActionLoading(id);
     try {
+      if (!id) {
+        alert('Missing request id');
+        return;
+      }
       const res = await fetch(`/api/extension/${id}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ status: action }),
       });
 
+      const payloadRaw = await res.json().catch(() => null);
+      // unwrap { data: updated } shapes
+      const payload = payloadRaw?.data ?? payloadRaw;
+
       if (!res.ok) {
-        throw new Error(`Failed to ${action.toLowerCase()} request`);
+        console.error('Action failed response', payloadRaw);
+        const message = payloadRaw?.error ?? payloadRaw?.message ?? `Failed to ${action.toLowerCase()} request`;
+        alert(message);
+        return;
       }
 
-
-      setExtensions((prev) =>
-        prev.map((item) =>
-          item.id === id ? { ...item, status: action } : item
-        )
-      );
+      // If API returned updated record, replace it in local state; otherwise update status locally
+      if (payload && payload.id) {
+        setExtensions((prev) => prev.map((item) => (item.id === id ? payload : item)));
+      } else {
+        setExtensions((prev) => prev.map((item) => (item.id === id ? { ...item, status: action } : item)));
+      }
 
       alert(`Request ${action.toLowerCase()} successfully`);
     } catch (err) {
@@ -64,6 +77,20 @@ const ExtensionTable = () => {
 
   if (extensions.length === 0) {
     return <p className="text-gray-500">No extension requests found.</p>;
+  }
+
+  const formatDate = (isoOrDate?: string) => {
+    if (!isoOrDate) return '—';
+    // If it's already YYYY-MM-DD, return as-is
+    if (/^\d{4}-\d{2}-\d{2}$/.test(isoOrDate)) return isoOrDate;
+    try {
+      const d = new Date(isoOrDate);
+      if (Number.isNaN(d.getTime())) return '—';
+      // Always present as YYYY-MM-DD so student and lecturer see the same calendar day
+      return d.toISOString().slice(0, 10);
+    } catch (e) {
+      return '—';
+    }
   }
 
   return (
@@ -88,13 +115,13 @@ const ExtensionTable = () => {
             <tbody>
               {extensions.map((item) => (
                 <tr key={item.id} className="border-t">
-                  <td className="py-3 px-6">{item.student.name}</td>
+                  <td className="py-3 px-6">{(item.student as any)?.fullname ?? (item.student as any)?.name ?? '—'}</td>
                   <td className="py-3 px-6">{item.assignment?.title}</td>
                   <td className="py-3 px-6">
                     {(item.assignment as any)?.course?.code || (item.assignment as any)?.course?.courseCode}
                   </td>
                   <td className="py-3 px-6">
-                    {new Date(item.requestedDate!).toLocaleDateString()}
+                    {formatDate((item as any).requestedDateStr ?? item.requestedDate ?? item.createdAt)}
                   </td>
                   <td className="py-3 px-6 font-medium">
                     {item.status === "PENDING" && (

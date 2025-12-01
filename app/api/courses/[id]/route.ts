@@ -3,7 +3,15 @@ import { getACourse } from "@/server/actions/course.actions";
 
 export async function GET(_req: Request, ctx: any) {
   try {
-    const courseId = ctx?.params?.id;
+    // Next.js may provide `params` as a Promise in route handlers — unwrap it.
+    const params = await ctx?.params;
+    let courseId = params?.id;
+    if (Array.isArray(courseId)) courseId = courseId[0];
+    // debug log to diagnose missing id requests
+    console.debug('[API] GET /api/courses/[id] - incoming courseId:', courseId);
+    if (!courseId) {
+      return NextResponse.json({ error: 'Missing course id' }, { status: 400 });
+    }
     const result = await getACourse(courseId) as any;
 
     if (result?.data) {

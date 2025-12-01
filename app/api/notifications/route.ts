@@ -8,7 +8,7 @@ export async function GET(_req: Request) {
   if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
   const { data, error } = await safe(
-    prisma.notification.findMany({ where: { intendedUserId: user.userId }, orderBy: { createdAt: "desc" } })
+    prisma.notification.findMany({ where: { intendedUserId: user.userId }, include: { assignment: true }, orderBy: { createdAt: "desc" } })
   );
 
   if (error) return NextResponse.json({ error }, { status: 500 });

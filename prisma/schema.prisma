@@ -43,7 +43,7 @@ model User {
 
 model Course {
   id          String           @id @default(cuid())
-  name       String
+  name        String
   code        String
   level       String
   description String?
@@ -79,16 +79,18 @@ model Enrollment {
 }
 
 model Assignment {
-  id          String       @id @default(cuid())
-  title       String
-  description String?
-  extensible  Boolean      @default(false)
-  dueDate     DateTime
-  courseId    String
-  course      Course       @relation(fields: [courseId], references: [id])
-  submissions Submission[]
+  id                String         @id @default(cuid())
+  title             String
+  description       String?
+  extensible        Boolean        @default(false)
+  dueDate           DateTime
+  courseId          String
+  course            Course         @relation(fields: [courseId], references: [id])
+  submissions       Submission[]
   // extension requests related to this assignment
   extensionRequests Request[]
+  // notifications related to this assignment (optional)
+  notifications     Notification[]
 }
 
 model Submission {
@@ -118,16 +120,20 @@ model Notification {
 
   assignmentId String?
 
+  // relation to the assignment (optional)
+  assignment Assignment? @relation(fields: [assignmentId], references: [id])
+
   intendedUserId String
   user           User   @relation(fields: [intendedUserId], references: [id])
 }
+
 model Request {
-  id        String   @id @default(cuid())
-  message   String
-  isRead    Boolean  @default(false)
-  createdAt DateTime @default(now())
-  assignmentId String
-  studentId    String
+  id            String        @id @default(cuid())
+  message       String
+  isRead        Boolean       @default(false)
+  createdAt     DateTime      @default(now())
+  assignmentId  String
+  studentId     String
   requestedDate DateTime?
   status        RequestStatus @default(PENDING)
 

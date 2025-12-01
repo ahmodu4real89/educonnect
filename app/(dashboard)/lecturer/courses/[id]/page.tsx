@@ -4,16 +4,19 @@ import AssignmentFormModal from "@/app/components/AssignmentFormModal";
 import { useUser } from "@/app/context/UserContext";
 import { useParams } from "next/navigation";
 import { useCallback, useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 import Image from "next/image";
 import Link from "next/link";
 import { toast } from "react-toastify";
 import { Assignment, CourseRes } from "@/app/lib/types";
+import { formatIsoDate } from "@/app/lib/date.util";
 import AssignmentTable from "@/app/components/AssignmentTable";
 
 const CoursePage = () => {
   const { user } = useUser();
   const params = useParams();
   const id = Array.isArray(params.id) ? params.id[0] : params.id;
+  const router = useRouter();
 
   const [course, setCourse] = useState<any>();
   const [loading, setLoading] = useState(true);
@@ -46,9 +49,17 @@ const CoursePage = () => {
 
   const fetchCourse = useCallback(async () => {
     try {
-      const res = await fetch(`/api/courses/${id}`);
+      setLoading(true);
+      console.debug("[CoursePage] fetching course for id:", id);
+      const res = await fetch(`/api/courses/${id}`, { cache: "no-store" });
       if (!res.ok) throw new Error("Failed to fetch course");
-      const data = await res.json();
+      const payload = await res.json();
+      console.debug("[CoursePage] raw payload:", payload);
+      // API sometimes returns { data: course } or the raw course object — handle both
+      const data = payload?.data ?? payload;
+      console.debug("[CoursePage] normalized data id:", data?.id, "assignments:", (data?.assignments || []).map((a:any)=>a.id));
+      // Ensure assignments is always an array to avoid UI inconsistencies
+      if (data && !Array.isArray(data.assignments)) data.assignments = data.assignments ? [data.assignments] : [];
       setCourse(data);
     } catch (error) {
       console.error("Error fetching course:", error);
@@ -59,12 +70,13 @@ const CoursePage = () => {
 
   const fetchStudents = useCallback(async () => {
     try {
-      const res = await fetch(`/api/courses/${id}/students`);
+      const res = await fetch(`/api/courses/${id}/students`, { cache: "no-store" });
       if (!res.ok) {
         console.error('Failed to fetch students', await res.text())
         return;
       }
-      const data = await res.json();
+      const payload = await res.json();
+      const data = payload?.data ?? payload;
       setStudents(data || []);
     } catch (err) {
       console.error('Error fetching students', err)
@@ -91,7 +103,15 @@ const CoursePage = () => {
       <div className="w-full max-w-4xl space-y-8">
         {/* Header */}
         <header>
-          <h1 className="text-3xl font-bold text-gray-900">{course.name}</h1>
+          <div className="flex items-center gap-4 mb-2">
+            <button
+              onClick={() => router.back()}
+              className="text-sm text-blue-600 hover:underline"
+            >
+              ← Back
+            </button>
+            <h1 className="text-3xl font-bold text-gray-900">{course.name}</h1>
+          </div>
           <p className="text-gray-500">Course ID: {course.id}</p>
         </header>
 
@@ -111,8 +131,8 @@ const CoursePage = () => {
             className="w-14 h-14 rounded-full object-cover"
           />
           <div>
-            <h3 className="font-medium text-gray-900">{course.lecturer?.name}</h3>
-            <p className="text-sm text-gray-500">{course.lecturer?.email}</p>
+            <h3 className="font-medium text-gray-900">{(course?.lecturers?.[0]?.lecturer?.fullname ?? course?.lecturers?.[0]?.lecturer?.name ?? course?.lecturer?.name) || '—'}</h3>
+            <p className="text-sm text-gray-500">{course?.lecturers?.[0]?.lecturer?.email ?? course?.lecturer?.email ?? '—'}</p>
             {/* Enrolled students summary */}
             <div className="mt-2">
               <p className="text-sm text-gray-600">Enrolled students: {students.length}</p>
@@ -165,7 +185,7 @@ const CoursePage = () => {
                       <td className="px-6 py-4 font-medium text-gray-900">{a.title}</td>
                       <td className="px-6 py-4 text-gray-600">{a.description}</td>
                       <td className="px-6 py-4 text-gray-600">
-                        {new Date(a.dueDate).toLocaleDateString()}
+                        {formatIsoDate(a.dueDate)}
                       </td>
                       <td className="px-6 py-4 flex gap-4 text-blue-600 font-semibold">
                         <button onClick={() => handleEdit(a)}>Edit</button>

@@ -41,7 +41,8 @@ export interface CourseGridProps {
 
 export interface Student {
   id: string;
-  name: string;
+  name?: string;
+  fullname?: string;
   email: string;
 }
 

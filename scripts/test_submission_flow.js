@@ -57,7 +57,7 @@ const { PrismaClient } = require('@prisma/client');
     console.log('Graded submission:', graded.id, 'grade:', graded.grade);
 
     // Create notification to student (simulate server behavior)
-    const notif = await prisma.notification.create({ data: { message: `Your submission for assignment ${assignment.id} has been graded. Grade: ${graded.grade}`, intendedUserId: student.id, assignmentId: assignment.id } });
+    const notif = await prisma.notification.create({ data: { message: `Your submission for "${assignment.title}" has been graded. Grade: ${graded.grade}`, intendedUserId: student.id, assignmentId: assignment.id } });
     console.log('Created notification:', notif.id);
 
     console.log('Submission flow test complete.');

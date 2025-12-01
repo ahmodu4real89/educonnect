@@ -68,8 +68,14 @@ const RequestExtensionForm = () => {
         throw new Error(`Failed to submit request: ${res.statusText}`);
       }
 
-      const data = await res.json();
-      console.log("Success:", data);
+      const resp = await res.json().catch(() => null);
+      // unwrap { data } shape
+      const created = resp?.data ?? resp
+      console.log("Success:", created);
+
+      // show confirmation with the exact requested date (server-provided if available)
+      const shownDate = created?.requestedDateStr ?? newDeadline;
+      toast.success(`Extension requested for ${shownDate}`);
 
       router.push("/student");
     } catch (err) {

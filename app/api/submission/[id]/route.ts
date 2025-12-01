@@ -98,9 +98,12 @@ export async function PATCH(req: NextRequest, context: any) {
 
     // create an in-app notification for the student
     try {
+      // try to resolve the assignment title for a friendlier message
+      const assignment = await prisma.assignment.findUnique({ where: { id: data!.assignmentId } });
+      const assignmentLabel = assignment?.title ?? data?.assignmentId;
       await prisma.notification.create({
         data: {
-          message: `Your submission for "${data?.assignmentId}" has been graded. Grade: ${grade ?? "N/A"}`,
+          message: `Your submission for "${assignmentLabel}" has been graded. Grade: ${grade ?? "N/A"}`,
           intendedUserId: data!.studentId,
           assignmentId: data!.assignmentId,
           isRead: false,

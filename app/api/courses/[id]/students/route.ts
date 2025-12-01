@@ -3,7 +3,9 @@ import { fetchEnrolledStudents } from "@/server/actions/enroll_assigned.action";
 
 export async function GET(_req: Request, ctx: any) {
   try {
-    const courseId = ctx?.params?.id;
+    const params = await ctx?.params;
+    let courseId = params?.id;
+    if (Array.isArray(courseId)) courseId = courseId[0];
     const result = await fetchEnrolledStudents(courseId) as any;
 
     if (result?.data) {

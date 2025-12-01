@@ -4,6 +4,8 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
+    "migrate:notifications": "node scripts/migrate_notifications_add_titles.js",
+    "debug:requests": "node scripts/print_requests.js",
     "build": "next build",
     "start": "next start",
     "lint": "eslint"
@@ -41,6 +43,7 @@
     "@types/node": "^20",
     "@types/react": "^19",
     "@types/react-dom": "^19",
+    "baseline-browser-mapping": "^2.8.32",
     "eslint": "^9",
     "eslint-config-next": "16.0.1",
     "prisma": "^6.18.0",
