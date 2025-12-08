@@ -7,7 +7,7 @@
     "migrate:notifications": "node scripts/migrate_notifications_add_titles.js",
     "debug:requests": "node scripts/print_requests.js",
     "build": "next build",
-    "start": "next start",
+    "start": "next start -p $PORT",
     "lint": "eslint",
     "migrate": "prisma migrate deploy"
   

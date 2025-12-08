@@ -1,14 +1,32 @@
-FROM node:22-alpine
+# Use Alpine but pin version to avoid python issues
+FROM node:20-alpine3.18
 
 WORKDIR /app
 
-RUN apk add --no-cache python3 make g++ bash git libc6-compat
+# Install required build tools for bcrypt, prisma, etc.
+RUN apk add --no-cache \
+    python3 \
+    make \
+    g++ \
+    libc6-compat
 
+# Copy only package files first (better caching)
 COPY package.json package-lock.json ./
+
+# Install dependencies
+RUN npm install --legacy-peer-deps
+
+# Copy project files
 COPY . .
 
-RUN npm install --legacy-peer-deps --ignore-scripts
+# Generate Prisma client
 RUN npx prisma generate
 
+# Build Next.js
+RUN npm run build
+
+# Expose port
 EXPOSE 3000
-CMD ["npm", "run", "dev"]
+
+# Start app
+CMD ["npm", "start"]
