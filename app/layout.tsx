@@ -6,7 +6,6 @@ import ToastProvider from "./lib/ToastProvider";
 import AntdPatchLoader from "./components/AntdPatchLoader";
 
 const inter = Inter({
-  variable: "--font-geist-sans",
   subsets: ["latin"],
 });
 
@@ -24,10 +23,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <body
-        className={`${inter.variable} antialiased`}
-      >
-        {/* ensure patch runs early on client */}
+   <body className={`${inter.className} antialiased`}>
         <AntdPatchLoader />
         <ToastProvider />
           {children}
