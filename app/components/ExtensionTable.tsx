@@ -6,9 +6,9 @@ import { Extension } from "../lib/types";
 const ExtensionTable = () => {
   const [extensions, setExtensions] = useState<Extension[]>([]);
   const [loading, setLoading] = useState(true);
-  const [actionLoading, setActionLoading] = useState<string | null>(null); // Only string or null
+  const [actionLoading, setActionLoading] = useState<string | null>(null); 
 
-  // Fetch extensions on mount
+  
   useEffect(() => {
     const fetchExtensions = async () => {
       try {
@@ -16,7 +16,7 @@ const ExtensionTable = () => {
         if (!res.ok) throw new Error(`Failed to fetch extensions: ${res.statusText}`);
 
         const data = await res.json();
-        // Support { data: [...] } or raw array responses
+        
         const items = Array.isArray(data) ? data : Array.isArray(data?.data) ? data.data : [];
         setExtensions(items as Extension[]);
       } catch (err) {

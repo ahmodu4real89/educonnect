@@ -6,6 +6,10 @@ type Notification = {
   message: string;
   isRead: boolean;
   createdAt: string;
+  assignment?: {
+    title: string;
+    
+  };
 };
 
 export default function NotificationBell() {
