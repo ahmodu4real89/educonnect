@@ -8,7 +8,8 @@
     "debug:requests": "node scripts/print_requests.js",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "postinstall": "prisma generate"
   },
   "dependencies": {
     "@ant-design/v5-patch-for-react-19": "^1.0.3",
